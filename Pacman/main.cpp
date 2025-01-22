@@ -15,13 +15,13 @@ String tile_map[H] = {
     "A AA AAA A AAA AA A",//4
     "A    A   A   A    A",//5
     "AAAA AAA A AAA AAAA",//6
-    "BBBA A   DG  A ABBB",//7
+    "BBBA A   DA  A ABBB",//7
     "AAAA A AAAAA A AAAA",//8
     "BBBB B ABBBA B BBBB",//9
     "AAAA A AAAAA A AAAA",//10
     "BBBA A       A ABBB",//11
     "AAAA A AAAAA A AAAA",//12
-    "A        A        A",//13
+    "A        A   G    A",//13
     "A AA AAA A AAA AA A",//14
     "A  A     C     A  A",//15
     "AA A A AAAAA A A AA",//16
@@ -162,14 +162,14 @@ private:
 
 class Enemy {
 public:
-    int x = 9;
-    int y = 7;
-    int new_x = x;
-    int new_y = y;
+    int x;
+    int y;
+    int new_x;
+    int new_y;
     int rotate = 1;
     //Direction rotate = Direction::RIGHT;//in the begining here was 1==right, 2==left, 3==up, 4=down
     
-    Enemy(char name_, int x_, int y_) : name{ name_ }, x{x_}, y{y_}
+    Enemy(char name_, int x_, int y_) : name{ name_ }, x{ x_ }, y{ y_ }, new_x{ x_ }, new_y{ y }
     {}
 
     void Update()
@@ -285,7 +285,7 @@ private:
 };
 
 
-void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy &enemy)
+void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy &enemy, Enemy &enemy2)
 {
     for (size_t i = 0; i < H; i++)
     {
@@ -306,6 +306,10 @@ void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy 
             if (tile_map[i][j] == 'D')
             {
                 plat.setTextureRect(IntRect(ts * 5, ts * enemy.GetRotation(), ts, ts));//arguments: Left, Top, Width, Height 
+            }
+            if (tile_map[i][j] == 'G')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy2.GetRotation(), ts, ts));//arguments: Left, Top, Width, Height 
             }
             if (tile_map[i][j] == 'B')
             {
@@ -330,7 +334,8 @@ int main(int argc, char** argv)
 
     Player player;
     Enemy enemy1('D', 9, 7);
-    Enemy enemy2('G', 10, 7);
+    Enemy wall1('A', 10, 7);
+    Enemy enemy2('G', 13, 13);
 
     while (window.isOpen())
     {
@@ -367,10 +372,11 @@ int main(int argc, char** argv)
         }
         player.Update();
         enemy1.Update();
+        wall1.Update();
         enemy2.Update();
         window.clear(Color::Black);
         
-        RepaintGameField(window, plat, player, enemy1);
+        RepaintGameField(window, plat, player, enemy1, enemy2);
     }
     return 0;
 }
