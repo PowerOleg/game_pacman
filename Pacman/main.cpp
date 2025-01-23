@@ -1,13 +1,10 @@
-#include <SFML/Graphics.hpp>
 #include <time.h>
+#include "Game.h"
+#include "Player.h"
+#include "Enemy.h"
 
 using namespace sf;
-
-const int H = 21;
-const int W = 19;
-const int ts = 25;
-const int score_to_win = 168;
-bool game_over = false;
+void RepaintGameField(RenderWindow& window, Sprite& plat, Sprite& youwin, Sprite& youlose, Player& player, Enemy* enemies);
 
 String tile_map[H] = {
     "AAAAAAAAAAAAAAAAAAA",//0
@@ -33,389 +30,6 @@ String tile_map[H] = {
     "AAAAAAAAAAAAAAAAAAA",//20
 };
 
-enum class Direction
-{
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN
-};
-
-
-class Score
-{
-public:
-    const static int len = 3;
-    Sprite sec[Score::len];
-    int s[Score::len], c;
-    bool vid[Score::len];
-
-    Score(Texture& image)
-    {
-       /* for (size_t i = 0; i < Score::len; i++)//TODO
-        {
-            sec[i].setTexture(image);
-            sec[i].setPosition(10 + 22 * i, H * ts + 10);
-            sec[i].setTextureRect(IntRect(0, 0, 22, 45));
-
-            s[i] = 0;
-            c = 0;
-        }*/
-    }
-
-    /*void Update()//TODO
-    {
-        if (c < 10)
-        {
-            s[0] = c;
-
-            vid[0] = true;
-            vid[1] = false;
-            vid[2] = false;
-        }
-        else if (c >= 10 && c < 100)
-        {
-            s[0] = c / 10;
-            s[1] = c % 10;
-
-            vid[0] = true;
-            vid[1] = true;
-            vid[2] = false;
-        }
-        else
-        {
-            s[0] = c / 100;
-            s[1] = (c / 10) % 10;
-            s[2] = (c % 100) % 10;
-
-            vid[0] = true;
-            vid[1] = true;
-            vid[2] = true;
-        }
-        for (size_t i = 0; i < Score::len; i++)
-        {
-            sec[i].setTextureRect(IntRect(22 * s[i], 0, 22, 45));
-        }
-    }*/
-    void AddScore()
-    {
-        this->score++;
-    }
-
-    int GetScore()
-    {
-        return this->score;
-    }
-
-private:
-    int score = 0;
-};
-
-
-class Player {
-public:
-    int x = 9;
-    int y = 15;
-    int new_x = 0;
-    int new_y = 0;
-    Direction rotate = Direction::RIGHT;//in the begining here was 1==right, 2==left, 3==up, 4=down
-    Score* score;
-
-    Player(Score &score_) : score{ &score_ }
-    {}
-
-    ~Player()
-    {
-        delete score;
-    }
-	void Update()
-	{
-		frame += 0.01;
-		if (frame > 5)
-		{
-			frame -= 5;
-		}
-
-		delay++;
-		if (delay >= 300)
-		{
-			switch (rotate)
-			{
-			case Direction::LEFT:
-				if (tile_map[y][new_x - 1] != 'A')
-				{
-					new_x--;
-				}
-				break;
-			case Direction::RIGHT:
-				if (tile_map[y][new_x + 1] != 'A')
-				{
-					new_x++;
-				}
-				break;
-			case Direction::UP:
-				if (tile_map[new_y - 1][x] != 'A')
-				{
-					new_y--;
-				}
-				break;
-			case Direction::DOWN:
-				if (tile_map[new_y + 1][x] != 'A')
-				{
-					new_y++;
-				}
-				break;
-			}
-			delay = 0;
-		}
-
-		if (tile_map[new_y][new_x] == ' ')//the game engine to move the player through dots
-		{
-			tile_map[y][x] = 'B';
-			tile_map[new_y][new_x] = 'C';
-
-			x = new_x;
-			y = new_y;
-			score->AddScore();
-		}
-		if (tile_map[new_y][new_x] == 'B')//the game engine to move the player through the field
-		{
-			tile_map[y][x] = 'B';
-			tile_map[new_y][new_x] = 'C';
-
-			x = new_x;
-			y = new_y;
-		}
-        if (tile_map[new_y][new_x] == 'D' || tile_map[new_y][new_x] == 'G' || tile_map[new_y][new_x] == 'E' || tile_map[new_y][new_x] == 'F')
-        {
-            game_over = true;
-        }
-
-        PlayerOutOfBounds();
-
-	};
-
-   float GetFrame()
-   {
-       return this->frame;
-   }
-
-   int GetRotation()
-   {
-       switch (this->rotate)
-       {
-       case Direction::LEFT:
-           return 2;
-       case Direction::RIGHT:
-           return 1;
-       case Direction::UP:
-           return 3;
-       case Direction::DOWN:
-           return 4;
-       }
-   }
-
-private:
-    float frame = 0;
-    int delay = 0;
-
-    void PlayerOutOfBounds()
-    {
-        if (new_y == 9 && (new_x == 0 || new_x == 18))
-        {
-            if (new_x == 0)
-            {
-                new_x = 17;
-            }
-            else
-            {
-                new_x = 1;
-            }
-
-            tile_map[y][x] = 'B';
-            tile_map[new_y][new_x] = 'C';
-
-            x = new_x;
-            y = new_y;
-        }
-    }
-};
-
-
-class Enemy {
-public:
-    int x;
-    int y;
-    int new_x;
-    int new_y;
-    int rotate = 1;
-    
-    Enemy(char name_, int x_, int y_) : name{ name_ }, x{ x_ }, y{ y_ }, new_x{ x_ }, new_y{ y }
-    {}
-
-    void Update()
-    {
-        delay++;
-        if (delay >= 300)
-        {
-            this->rotate = (rand() % 4) + 1;
-
-            switch (rotate)
-            {
-            case 1:
-                if (tile_map[y][new_x - 1] != 'A')
-                {
-                    new_x--;
-                }
-                break;
-            case 2:
-                if (tile_map[y][new_x + 1] != 'A')
-                {
-                    new_x++;
-                }
-                break;
-            case 3:
-                if (tile_map[new_y - 1][x] != 'A')
-                {
-                    new_y--;
-                }
-                break;
-            case 4:
-                if (tile_map[new_y + 1][x] != 'A')
-                {
-                    new_y++;
-                }
-                break;
-            }
-            delay = 0;
-        }
-
-        if (tile_map[new_y][new_x] == ' ')//the game engine to move the enemy through dots
-        {
-            tile_map[y][x] = ' ';
-            tile_map[new_y][new_x] = name;
-
-            x = new_x;
-            y = new_y;
-        }
-        if (tile_map[new_y][new_x] == 'B')//the game engine to move the enemy through the field
-        {
-            tile_map[y][x] = 'B';
-            tile_map[new_y][new_x] = name;
-
-            x = new_x;
-            y = new_y;
-        }
-        if (tile_map[new_y][new_x] == 'C')//the game engine to kill the player
-        {
-            game_over = true;
-            tile_map[y][x] = ' ';
-            tile_map[new_y][new_x] = name;
-
-            x = new_x;
-            y = new_y;
-        }
-        PlayerOutOfBounds();
-    };
-
-    float GetFrame()
-    {
-        return this->frame;
-    }
-    int GetRotation()
-    {
-        return this->rotate;
-    }
-
-private:
-    float frame = 0;
-    int score = 0;
-    int delay = 0;
-    char name;
-
-    void PlayerOutOfBounds()
-    {
-        if (new_y == 9 && (new_x == 0 || new_x == 18))
-        {
-            if (new_x == 0)
-            {
-                new_x = 17;
-            }
-            else
-            {
-                new_x = 1;
-            }
-
-            tile_map[y][x] = 'B';
-            tile_map[new_y][new_x] = name;
-
-            x = new_x;
-            y = new_y;
-        }
-    }
-};
-
-
-void RepaintGameField(RenderWindow &window, Sprite &plat, Sprite &youwin, Sprite &youlose, Player &player, Enemy &enemy, Enemy &enemy2, Enemy& enemy3, Enemy& enemy4)
-{
-    if (player.score->GetScore() >= score_to_win)
-    {
-        window.draw(youwin);
-        window.display();
-        return;
-    }
-    if (game_over)
-    {
-        window.draw(youlose);
-        window.display();
-        return;
-    }
-    for (size_t i = 0; i < H; i++)
-    {
-        for (size_t j = 0; j < W; j++)
-        {
-            if (tile_map[i][j] == 'A')
-            {
-                plat.setTextureRect(IntRect(0, 0, ts, ts));
-            }
-            if (tile_map[i][j] == 'C')
-            {
-                
-                plat.setTextureRect(IntRect(ts * int(player.GetFrame()), ts * player.GetRotation(), ts, ts));//arguments IntRect( frame in axis x in picture from sprites, the number of "fragment 25 * 25 of picture" from sprites in axis y, Width, Height);
-            }
-            if (tile_map[i][j] == ' ')
-            {
-                plat.setTextureRect(IntRect(ts, 0, ts, ts));
-            }
-            if (tile_map[i][j] == 'D')
-            {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemy.GetRotation(), ts, ts));
-            }
-            if (tile_map[i][j] == 'G')
-            {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemy2.GetRotation(), ts, ts));
-            }
-            if (tile_map[i][j] == 'E')
-            {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemy3.GetRotation(), ts, ts));
-            }
-            if (tile_map[i][j] == 'F')
-            {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemy4.GetRotation(), ts, ts));
-            }
-            if (tile_map[i][j] == 'B')
-            {
-                continue;
-            }
-            plat.setPosition(j * ts, i * ts);
-            window.draw(plat);
-        }
-
-    }
-    
-    window.display();
-    //sleep(sf::Time(sf::milliseconds(300)));
-}
 
 
 int main(int argc, char** argv)
@@ -440,13 +54,13 @@ int main(int argc, char** argv)
     score_texture.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\score.png");
 
     Score score_local(score_texture);
-    Player player(score_local);
-    Enemy enemy1('D', 9, 7);
-    Enemy wall1('A', 10, 7);
-    Enemy enemy2('G', 13, 13);
-    Enemy enemy3('E', 3, 13);
-    Enemy enemy4('F', 9, 19);
-
+    Player player(tile_map, score_local);
+    Enemy enemy1(tile_map, 'D', 9, 7);
+    Enemy wall1(tile_map, 'A', 10, 7);
+    Enemy enemy2(tile_map, 'G', 13, 13);
+    Enemy enemy3(tile_map, 'E', 3, 13);
+    Enemy enemy4(tile_map, 'F', 9, 19);
+    Enemy enemies[]{ wall1, enemy1 , enemy2, enemy3, enemy4 };
     while (window.isOpen())
     {
         Event event;
@@ -480,6 +94,7 @@ int main(int argc, char** argv)
                 }
             }
         }
+        
         player.Update();
         enemy1.Update();
         wall1.Update();
@@ -488,7 +103,69 @@ int main(int argc, char** argv)
         enemy4.Update();
         window.clear(Color::Black);
         
-        RepaintGameField(window, plat, youwin, youlose, player, enemy1, enemy2, enemy3, enemy4);
+        RepaintGameField(window, plat, youwin, youlose, player, enemies);
     }
     return 0;
+}
+
+
+void RepaintGameField(RenderWindow& window, Sprite& plat, Sprite& youwin, Sprite& youlose, Player& player, Enemy* enemies)
+{
+    if (player.score->GetScore() >= score_to_win)
+    {
+        window.draw(youwin);
+        window.display();
+        return;
+    }
+    if (game_over)
+    {
+        window.draw(youlose);
+        window.display();
+        return;
+    }
+    for (size_t i = 0; i < H; i++)
+    {
+        for (size_t j = 0; j < W; j++)
+        {
+            if (tile_map[i][j] == 'A')
+            {
+                plat.setTextureRect(IntRect(0, 0, ts, ts));
+            }
+            if (tile_map[i][j] == 'C')
+            {
+
+                plat.setTextureRect(IntRect(ts * int(player.GetFrame()), ts * player.GetRotation(), ts, ts));//arguments IntRect( frame in axis x in picture from sprites, the number of "fragment 25 * 25 of picture" from sprites in axis y, Width, Height);
+            }
+            if (tile_map[i][j] == ' ')
+            {
+                plat.setTextureRect(IntRect(ts, 0, ts, ts));
+            }
+            if (tile_map[i][j] == 'D')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemies[1].GetRotation(), ts, ts));
+            }
+            if (tile_map[i][j] == 'G')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemies[2].GetRotation(), ts, ts));
+            }
+            if (tile_map[i][j] == 'E')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemies[3].GetRotation(), ts, ts));
+            }
+            if (tile_map[i][j] == 'F')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemies[4].GetRotation(), ts, ts));
+            }
+            if (tile_map[i][j] == 'B')
+            {
+                continue;
+            }
+            plat.setPosition(j * ts, i * ts);
+            window.draw(plat);
+        }
+
+    }
+
+    window.display();
+    //sleep(sf::Time(sf::milliseconds(300)));
 }
