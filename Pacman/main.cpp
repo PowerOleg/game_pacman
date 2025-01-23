@@ -5,10 +5,9 @@ using namespace sf;
 
 const int H = 21;
 const int W = 19;
-
 const int ts = 25;
-
-const int score_to_win = 3;
+const int score_to_win = 168;
+bool game_over = false;
 
 String tile_map[H] = {
     "AAAAAAAAAAAAAAAAAAA",//0
@@ -32,8 +31,6 @@ String tile_map[H] = {
     "A AAAAAA A AAAAAA A",//18
     "A        F        A",//19
     "AAAAAAAAAAAAAAAAAAA",//20
-
-
 };
 
 enum class Direction
@@ -103,7 +100,7 @@ public:
 			y = new_y;
 			score++;
 		}
-		else if (tile_map[new_y][new_x] == 'B')//the game engine to move the player through the field
+		if (tile_map[new_y][new_x] == 'B')//the game engine to move the player through the field
 		{
 			tile_map[y][x] = 'B';
 			tile_map[new_y][new_x] = 'C';
@@ -111,6 +108,10 @@ public:
 			x = new_x;
 			y = new_y;
 		}
+        if (tile_map[new_y][new_x] == 'D' || tile_map[new_y][new_x] == 'G' || tile_map[new_y][new_x] == 'E' || tile_map[new_y][new_x] == 'F')
+        {
+            game_over = true;
+        }
 
         PlayerOutOfBounds();
 
@@ -223,7 +224,7 @@ public:
             delay = 0;
         }
 
-        if (tile_map[new_y][new_x] == ' ')//the game engine to move the player through dots
+        if (tile_map[new_y][new_x] == ' ')//the game engine to move the enemy through dots
         {
             tile_map[y][x] = ' ';
             tile_map[new_y][new_x] = name;
@@ -231,7 +232,7 @@ public:
             x = new_x;
             y = new_y;
         }
-        else if (tile_map[new_y][new_x] == 'B')//the game engine to move the player through the field
+        if (tile_map[new_y][new_x] == 'B')//the game engine to move the enemy through the field
         {
             tile_map[y][x] = 'B';
             tile_map[new_y][new_x] = name;
@@ -239,7 +240,15 @@ public:
             x = new_x;
             y = new_y;
         }
+        if (tile_map[new_y][new_x] == 'C')//the game engine to kill the player
+        {
+            game_over = true;
+            tile_map[y][x] = ' ';
+            tile_map[new_y][new_x] = name;
 
+            x = new_x;
+            y = new_y;
+        }
         PlayerOutOfBounds();
 
     };
@@ -298,6 +307,12 @@ void RepaintGameField(RenderWindow &window, Sprite &plat, Sprite &youwin, Sprite
     if (player.GetScore() >= score_to_win)
     {
         window.draw(youwin);
+        window.display();
+        return;
+    }
+    if (game_over)
+    {
+        window.draw(youlose);
         window.display();
         return;
     }
@@ -384,10 +399,10 @@ int main(int argc, char** argv)
                 window.close();
             }
 
-            if (player.GetScore() >= score_to_win)
+            /*if (player.GetScore() >= score_to_win || game_over)
             {
                 continue;
-            }
+            }*/
 
             if (event.type == Event::KeyPressed)//the key listener changes player fields: x, rotate
             {
