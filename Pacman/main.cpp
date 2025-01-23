@@ -39,8 +39,78 @@ enum class Direction
     RIGHT,
     UP,
     DOWN
-
 };
+
+
+class Score
+{
+public:
+    const static int len = 3;
+    Sprite sec[Score::len];
+    int s[Score::len], c;
+    bool vid[Score::len];
+
+    Score(Texture& image)
+    {
+       /* for (size_t i = 0; i < Score::len; i++)//TODO
+        {
+            sec[i].setTexture(image);
+            sec[i].setPosition(10 + 22 * i, H * ts + 10);
+            sec[i].setTextureRect(IntRect(0, 0, 22, 45));
+
+            s[i] = 0;
+            c = 0;
+        }*/
+    }
+
+    /*void Update()//TODO
+    {
+        if (c < 10)
+        {
+            s[0] = c;
+
+            vid[0] = true;
+            vid[1] = false;
+            vid[2] = false;
+        }
+        else if (c >= 10 && c < 100)
+        {
+            s[0] = c / 10;
+            s[1] = c % 10;
+
+            vid[0] = true;
+            vid[1] = true;
+            vid[2] = false;
+        }
+        else
+        {
+            s[0] = c / 100;
+            s[1] = (c / 10) % 10;
+            s[2] = (c % 100) % 10;
+
+            vid[0] = true;
+            vid[1] = true;
+            vid[2] = true;
+        }
+        for (size_t i = 0; i < Score::len; i++)
+        {
+            sec[i].setTextureRect(IntRect(22 * s[i], 0, 22, 45));
+        }
+    }*/
+    void AddScore()
+    {
+        this->score++;
+    }
+
+    int GetScore()
+    {
+        return this->score;
+    }
+
+private:
+    int score = 0;
+};
+
 
 class Player {
 public:
@@ -49,7 +119,15 @@ public:
     int new_x = 0;
     int new_y = 0;
     Direction rotate = Direction::RIGHT;//in the begining here was 1==right, 2==left, 3==up, 4=down
+    Score* score;
 
+    Player(Score &score_) : score{ &score_ }
+    {}
+
+    ~Player()
+    {
+        delete score;
+    }
 	void Update()
 	{
 		frame += 0.01;
@@ -98,7 +176,7 @@ public:
 
 			x = new_x;
 			y = new_y;
-			score++;
+			score->AddScore();
 		}
 		if (tile_map[new_y][new_x] == 'B')//the game engine to move the player through the field
 		{
@@ -136,14 +214,9 @@ public:
            return 4;
        }
    }
-   int GetScore()
-   {
-       return this->score;
-   }
 
 private:
     float frame = 0;
-    int score = 0;
     int delay = 0;
 
     void PlayerOutOfBounds()
@@ -176,19 +249,12 @@ public:
     int new_x;
     int new_y;
     int rotate = 1;
-    //Direction rotate = Direction::RIGHT;//in the begining here was 1==right, 2==left, 3==up, 4=down
     
     Enemy(char name_, int x_, int y_) : name{ name_ }, x{ x_ }, y{ y_ }, new_x{ x_ }, new_y{ y }
     {}
 
     void Update()
     {
-        //frame += 0.01;
-        //if (frame > 5)
-        // {
-        //    frame -= 5;
-        //}
-
         delay++;
         if (delay >= 300)
         {
@@ -250,7 +316,6 @@ public:
             y = new_y;
         }
         PlayerOutOfBounds();
-
     };
 
     float GetFrame()
@@ -260,17 +325,6 @@ public:
     int GetRotation()
     {
         return this->rotate;
-        /*switch (this->rotate)
-        {
-        case Direction::LEFT:
-            return 2;
-        case Direction::RIGHT:
-            return 1;
-        case Direction::UP:
-            return 3;
-        case Direction::DOWN:
-            return 4;
-        }*/
     }
 
 private:
@@ -304,7 +358,7 @@ private:
 
 void RepaintGameField(RenderWindow &window, Sprite &plat, Sprite &youwin, Sprite &youlose, Player &player, Enemy &enemy, Enemy &enemy2, Enemy& enemy3, Enemy& enemy4)
 {
-    if (player.GetScore() >= score_to_win)
+    if (player.score->GetScore() >= score_to_win)
     {
         window.draw(youwin);
         window.display();
@@ -382,7 +436,11 @@ int main(int argc, char** argv)
     Sprite youlose(you_lose);
     youlose.setPosition(30, 210);
 
-    Player player;
+    Texture score_texture;
+    score_texture.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\score.png");
+
+    Score score_local(score_texture);
+    Player player(score_local);
     Enemy enemy1('D', 9, 7);
     Enemy wall1('A', 10, 7);
     Enemy enemy2('G', 13, 13);
@@ -398,11 +456,6 @@ int main(int argc, char** argv)
             {
                 window.close();
             }
-
-            /*if (player.GetScore() >= score_to_win || game_over)
-            {
-                continue;
-            }*/
 
             if (event.type == Event::KeyPressed)//the key listener changes player fields: x, rotate
             {
