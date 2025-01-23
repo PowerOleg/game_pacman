@@ -1,11 +1,14 @@
 #include <SFML/Graphics.hpp>
-//8:43
+#include <time.h>
+
 using namespace sf;
 
 const int H = 21;
 const int W = 19;
 
 const int ts = 25;
+
+const int score_to_win = 3;
 
 String tile_map[H] = {
     "AAAAAAAAAAAAAAAAAAA",//0
@@ -21,13 +24,13 @@ String tile_map[H] = {
     "AAAA A AAAAA A AAAA",//10
     "BBBA A       A ABBB",//11
     "AAAA A AAAAA A AAAA",//12
-    "A        A   G    A",//13
+    "A  E     A   G    A",//13
     "A AA AAA A AAA AA A",//14
     "A  A     C     A  A",//15
     "AA A A AAAAA A A AA",//16
     "A    A   A   A    A",//17
     "A AAAAAA A AAAAAA A",//18
-    "A                 A",//19
+    "A        F        A",//19
     "AAAAAAAAAAAAAAAAAAA",//20
 
 
@@ -117,6 +120,7 @@ public:
    {
        return this->frame;
    }
+
    int GetRotation()
    {
        switch (this->rotate)
@@ -130,6 +134,10 @@ public:
        case Direction::DOWN:
            return 4;
        }
+   }
+   int GetScore()
+   {
+       return this->score;
    }
 
 private:
@@ -285,8 +293,14 @@ private:
 };
 
 
-void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy &enemy, Enemy &enemy2)
+void RepaintGameField(RenderWindow &window, Sprite &plat, Sprite &youwin, Sprite &youlose, Player &player, Enemy &enemy, Enemy &enemy2, Enemy& enemy3, Enemy& enemy4)
 {
+    if (player.GetScore() >= score_to_win)
+    {
+        window.draw(youwin);
+        window.display();
+        return;
+    }
     for (size_t i = 0; i < H; i++)
     {
         for (size_t j = 0; j < W; j++)
@@ -297,7 +311,8 @@ void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy 
             }
             if (tile_map[i][j] == 'C')
             {
-                plat.setTextureRect(IntRect(ts * int(player.GetFrame()), ts * player.GetRotation(), ts, ts));//arguments: Left, Top, Width, Height 
+                
+                plat.setTextureRect(IntRect(ts * int(player.GetFrame()), ts * player.GetRotation(), ts, ts));//arguments IntRect( frame in axis x in picture from sprites, the number of "fragment 25 * 25 of picture" from sprites in axis y, Width, Height);
             }
             if (tile_map[i][j] == ' ')
             {
@@ -305,11 +320,19 @@ void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy 
             }
             if (tile_map[i][j] == 'D')
             {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemy.GetRotation(), ts, ts));//arguments: Left, Top, Width, Height 
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy.GetRotation(), ts, ts));
             }
             if (tile_map[i][j] == 'G')
             {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemy2.GetRotation(), ts, ts));//arguments: Left, Top, Width, Height 
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy2.GetRotation(), ts, ts));
+            }
+            if (tile_map[i][j] == 'E')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy3.GetRotation(), ts, ts));
+            }
+            if (tile_map[i][j] == 'F')
+            {
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy4.GetRotation(), ts, ts));
             }
             if (tile_map[i][j] == 'B')
             {
@@ -320,6 +343,7 @@ void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy 
         }
 
     }
+    
     window.display();
     //sleep(sf::Time(sf::milliseconds(300)));
 }
@@ -327,15 +351,28 @@ void RepaintGameField(RenderWindow &window, Sprite &plat, Player &player, Enemy 
 
 int main(int argc, char** argv)
 {
-    RenderWindow window(VideoMode(W * ts, H * ts), "Hey Polly=)");
+    srand(time(0));
+    RenderWindow window(VideoMode(W * ts, H * ts), "Pacman");
     Texture t;
     t.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\pacmansprites2.png");
     Sprite plat(t);
+
+    Texture you_win;
+    you_win.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\you_win.png");
+    Sprite youwin(you_win);
+    youwin.setPosition(30, 210);
+
+    Texture you_lose;
+    you_lose.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\you_lose.png");
+    Sprite youlose(you_lose);
+    youlose.setPosition(30, 210);
 
     Player player;
     Enemy enemy1('D', 9, 7);
     Enemy wall1('A', 10, 7);
     Enemy enemy2('G', 13, 13);
+    Enemy enemy3('E', 3, 13);
+    Enemy enemy4('F', 9, 19);
 
     while (window.isOpen())
     {
@@ -345,6 +382,11 @@ int main(int argc, char** argv)
             if (event.type == Event::Closed)
             {
                 window.close();
+            }
+
+            if (player.GetScore() >= score_to_win)
+            {
+                continue;
             }
 
             if (event.type == Event::KeyPressed)//the key listener changes player fields: x, rotate
@@ -374,9 +416,11 @@ int main(int argc, char** argv)
         enemy1.Update();
         wall1.Update();
         enemy2.Update();
+        enemy3.Update();
+        enemy4.Update();
         window.clear(Color::Black);
         
-        RepaintGameField(window, plat, player, enemy1, enemy2);
+        RepaintGameField(window, plat, youwin, youlose, player, enemy1, enemy2, enemy3, enemy4);
     }
     return 0;
 }
