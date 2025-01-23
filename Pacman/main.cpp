@@ -36,22 +36,22 @@ int main(int argc, char** argv)
 {
     srand(time(0));
     RenderWindow window(VideoMode(W * ts, H * ts), "Pacman");
-    Texture t;
-    t.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\pacmansprites2.png");
-    Sprite plat(t);
+    Texture texture;
+    texture.loadFromFile(".\\resources\\pacmansprites2.png");
+    Sprite plat(texture);
 
     Texture you_win;
-    you_win.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\you_win.png");
+    you_win.loadFromFile(".\\resources\\you_win.png");
     Sprite youwin(you_win);
     youwin.setPosition(30, 210);
 
     Texture you_lose;
-    you_lose.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\you_lose.png");
+    you_lose.loadFromFile(".\\resources\\you_lose.png");
     Sprite youlose(you_lose);
     youlose.setPosition(30, 210);
 
     Texture score_texture;
-    score_texture.loadFromFile("C:\\cpp\\games\\visual_studio\\Pacman\\Pacman\\score.png");
+    score_texture.loadFromFile(".\\resources\\score.png");
 
     Score score_local(score_texture);
     Player player(tile_map, score_local);
