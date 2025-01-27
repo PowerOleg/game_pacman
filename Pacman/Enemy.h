@@ -12,7 +12,7 @@ public:
     Enemy(String* tile_map_, char name_, int x_, int y_) : tile_map{ tile_map_ }, name{ name_ }, x{ x_ }, y{ y_ }, new_x{ x_ }, new_y{ y }
     {}
 
-    void Update()
+    void UpdateTileMap()
     {
         delay++;
         if (delay >= 300)

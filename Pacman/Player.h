@@ -87,7 +87,7 @@ public:
 		delete score;
 	}
 
-	void Update()
+	void UpdateTileMap()
 	{
 		frame += 0.01;
 		if (frame > 5)
@@ -151,7 +151,6 @@ public:
 		}
 
 		PlayerOutOfBounds();
-
 	};
 
 	float GetFrame()

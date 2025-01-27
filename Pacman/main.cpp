@@ -1,10 +1,12 @@
+#include <vector>
 #include <time.h>
 #include "Game.h"
 #include "Player.h"
 #include "Enemy.h"
 
+
 using namespace sf;
-void RepaintGameField(RenderWindow& window, Sprite& plat, Sprite& youwin, Sprite& youlose, Player& player, Enemy* enemies);
+void RepaintAnimation(RenderWindow& window, Sprite& plat, Player& player, std::vector<Enemy*> enemy_vector);
 
 String tile_map[H] = {
     "AAAAAAAAAAAAAAAAAAA",//0
@@ -51,7 +53,7 @@ int main(int argc, char** argv)
     youlose.setPosition(30, 210);
 
     Texture score_texture;
-    score_texture.loadFromFile(".\\resources\\score.png");
+    //score_texture.loadFromFile(".\\resources\\score.png");
 
     Score score_local(score_texture);
     Player player(tile_map, score_local);
@@ -60,7 +62,8 @@ int main(int argc, char** argv)
     Enemy enemy2(tile_map, 'G', 13, 13);
     Enemy enemy3(tile_map, 'E', 3, 13);
     Enemy enemy4(tile_map, 'F', 9, 19);
-    Enemy enemies[]{ wall1, enemy1 , enemy2, enemy3, enemy4 };
+    std::vector<Enemy*> enemy_vector = { &wall1, &enemy1 , &enemy2, &enemy3, &enemy4 };//Enemy** enemies = new Enemy*[5]{ &wall1, &enemy1, &enemy2, &enemy3, &enemy4 };//not beautiful
+
     while (window.isOpen())
     {
         Event event;
@@ -95,34 +98,37 @@ int main(int argc, char** argv)
             }
         }
         
-        player.Update();
-        enemy1.Update();
-        wall1.Update();
-        enemy2.Update();
-        enemy3.Update();
-        enemy4.Update();
+        player.UpdateTileMap();
+        enemy1.UpdateTileMap();
+        wall1.UpdateTileMap();
+        enemy2.UpdateTileMap();
+        enemy3.UpdateTileMap();
+        enemy4.UpdateTileMap();
+
         window.clear(Color::Black);
-        
-        RepaintGameField(window, plat, youwin, youlose, player, enemies);
+        if (player.score->GetScore() >= score_to_win)
+        {
+            window.draw(youwin);
+            window.display();
+            continue;
+        }
+        if (game_over)
+        {
+            window.draw(youlose);
+            window.display();
+            continue;
+        }
+
+        RepaintAnimation(window, plat, player, enemy_vector);
+        window.display();
+        //sleep(sf::Time(sf::milliseconds(300)));
     }
     return 0;
 }
 
 
-void RepaintGameField(RenderWindow& window, Sprite& plat, Sprite& youwin, Sprite& youlose, Player& player, Enemy* enemies)
-{
-    if (player.score->GetScore() >= score_to_win)
-    {
-        window.draw(youwin);
-        window.display();
-        return;
-    }
-    if (game_over)
-    {
-        window.draw(youlose);
-        window.display();
-        return;
-    }
+void RepaintAnimation(RenderWindow& window, Sprite& plat, Player& player, std::vector<Enemy*> enemy_vector)
+{  
     for (size_t i = 0; i < H; i++)
     {
         for (size_t j = 0; j < W; j++)
@@ -142,19 +148,19 @@ void RepaintGameField(RenderWindow& window, Sprite& plat, Sprite& youwin, Sprite
             }
             if (tile_map[i][j] == 'D')
             {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemies[1].GetRotation(), ts, ts));
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy_vector.at(1)->rotate, ts, ts));
             }
             if (tile_map[i][j] == 'G')
             {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemies[2].GetRotation(), ts, ts));
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy_vector.at(2)->rotate, ts, ts));
             }
             if (tile_map[i][j] == 'E')
             {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemies[3].GetRotation(), ts, ts));
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy_vector.at(3)->rotate, ts, ts));
             }
             if (tile_map[i][j] == 'F')
             {
-                plat.setTextureRect(IntRect(ts * 5, ts * enemies[4].GetRotation(), ts, ts));
+                plat.setTextureRect(IntRect(ts * 5, ts * enemy_vector.at(4)->rotate, ts, ts));
             }
             if (tile_map[i][j] == 'B')
             {
@@ -166,6 +172,4 @@ void RepaintGameField(RenderWindow& window, Sprite& plat, Sprite& youwin, Sprite
 
     }
 
-    window.display();
-    //sleep(sf::Time(sf::milliseconds(300)));
 }
