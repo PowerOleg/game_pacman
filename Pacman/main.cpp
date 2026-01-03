@@ -8,6 +8,10 @@
 using namespace sf;
 void RepaintAnimation(RenderWindow& window, Sprite& plat, Player& player, std::vector<Enemy*> enemy_vector);
 
+// Frame counter for walking animation (H symbol)
+static int walking_frame_counter = 0;
+static int walking_frame_delay = 0;
+
 String tile_map[H] = {
     "AAAAAAAAAAAAAAAAAAA",//0
     "A        A        A",//1
@@ -28,7 +32,7 @@ String tile_map[H] = {
     "AA A A AAAAA A A AA",//16
     "A    A   A   A    A",//17
     "A AAAAAA A AAAAAA A",//18
-    "A        F        A",//19
+    "A H      F        A",//19
     "AAAAAAAAAAAAAAAAAAA",//20
 };
 
@@ -62,7 +66,8 @@ int main(int argc, char** argv)
     Enemy enemy2(tile_map, 'G', 13, 13);
     Enemy enemy3(tile_map, 'E', 3, 13);
     Enemy enemy4(tile_map, 'F', 9, 19);
-    std::vector<Enemy*> enemy_vector = { &wall1, &enemy1 , &enemy2, &enemy3, &enemy4 };//Enemy** enemies = new Enemy*[5]{ &wall1, &enemy1, &enemy2, &enemy3, &enemy4 };//not beautiful
+    Enemy enemy5(tile_map, 'H', 2, 19);
+    std::vector<Enemy*> enemy_vector = { &wall1, &enemy1 , &enemy2, &enemy3, &enemy4, &enemy5 };//Enemy** enemies = new Enemy*[5]{ &wall1, &enemy1, &enemy2, &enemy3, &enemy4 };//not beautiful
 
     while (window.isOpen())
     {
@@ -104,6 +109,15 @@ int main(int argc, char** argv)
         enemy2.UpdateTileMap();
         enemy3.UpdateTileMap();
         enemy4.UpdateTileMap();
+        enemy5.UpdateTileMap();
+        
+        // Update walking animation frame counter for H symbol
+        walking_frame_delay++;
+        if (walking_frame_delay >= 400)  // Change frame every 400 game loops
+        {
+            walking_frame_counter = (walking_frame_counter + 1) % 4;  // Cycle through 0-3 (4 frames, rows 2-5)
+            walking_frame_delay = 0;
+        }
 
         window.clear(Color::Black);
         if (player.score->GetScore() >= score_to_win)
@@ -153,6 +167,13 @@ void RepaintAnimation(RenderWindow& window, Sprite& plat, Player& player, std::v
             if (tile_map[i][j] == 'G')
             {
                 plat.setTextureRect(IntRect(ts * 5, ts * enemy_vector.at(2)->rotate, ts, ts));
+            }
+            if (tile_map[i][j] == 'H')
+            {
+                // Use column 6 (ts * 6) and cycle through rows 1-4 (walking frames, rows 2-5 in 1-indexed)
+                // walking_frame_counter is 0-3, add 1 to get rows 1-4 (0-indexed) = rows 2-5 (1-indexed)
+                int walking_row = walking_frame_counter + 1;
+                plat.setTextureRect(IntRect(ts * 6, ts * walking_row, ts, ts));
             }
             if (tile_map[i][j] == 'E')
             {
